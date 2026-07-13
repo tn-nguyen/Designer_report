@@ -24,6 +24,8 @@ export const users = pgTable(
   },
   (t) => ({
     redmineIdIdx: uniqueIndex("users_redmine_id_unique").on(t.redmineId),
+    // drizzle-kit 0.24 does not emit check() into migrations; role is
+    // enforced at insert time via Zod in server actions.
     roleCheck: check("users_role_check", sql`${t.role} IN ('manager','member')`),
   }),
 );
@@ -53,6 +55,8 @@ export const tasks = pgTable(
   (t) => ({
     userStatusIdx: index("tasks_user_status_idx").on(t.userId, t.status),
     statusCreatedIdx: index("tasks_status_created_idx").on(t.status, t.createdAt),
+    // drizzle-kit 0.24 does not emit check() into migrations; status is
+    // enforced at insert time via Zod in server actions.
     statusCheck: check("tasks_status_check", sql`${t.status} IN ('draft','imported')`),
   }),
 );
