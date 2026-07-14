@@ -71,17 +71,15 @@ export function TaskForm({
       dueDate: dueDate || null,
     };
     start(async () => {
-      try {
-        if (editingId) {
-          await updateTask(editingId, input);
-        } else {
-          await createTask(input);
-        }
-        reset();
-        onDone?.();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Lỗi.");
+      const result = editingId
+        ? await updateTask(editingId, input)
+        : await createTask(input);
+      if (result.error) {
+        setError(result.error);
+        return;
       }
+      reset();
+      onDone?.();
     });
   }
 

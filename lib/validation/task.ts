@@ -17,7 +17,7 @@ export const taskInputSchema = z
   })
   .refine(
     (v) => !v.startDate || !v.dueDate || v.dueDate >= v.startDate,
-    { message: "dueDate must be >= startDate", path: ["dueDate"] },
+    { message: "Due date phải ≥ Start date", path: ["dueDate"] },
   );
 
 export type TaskInput = z.infer<typeof taskInputSchema>;

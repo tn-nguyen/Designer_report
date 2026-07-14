@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import { and, eq, inArray, desc, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { tasks, users } from "@/lib/db/schema";
@@ -9,40 +10,65 @@ import { taskInputSchema, type TaskInput } from "@/lib/validation/task";
 
 export type { TaskInput };
 
+export type TaskActionResult = { error?: string; id?: number };
+
 async function requireUser() {
   const u = await getCurrentUser();
   if (!u) throw new Error("Not authenticated");
   return u;
 }
 
-export async function createTask(input: TaskInput): Promise<{ id: number }> {
-  const u = await requireUser();
-  const data = taskInputSchema.parse(input);
-  const [row] = await db
-    .insert(tasks)
-    .values({ ...data, userId: u.db.id })
-    .returning({ id: tasks.id });
-  return row;
+/** Turns an unexpected throw into a returnable error message. */
+function toActionError(err: unknown): TaskActionResult {
+  if (err instanceof z.ZodError) {
+    return { error: err.issues[0]?.message ?? "Dữ liệu không hợp lệ." };
+  }
+  if (err instanceof Error) return { error: err.message };
+  return { error: "Đã xảy ra lỗi." };
 }
 
-export async function updateTask(id: number, input: TaskInput): Promise<void> {
+export async function createTask(input: TaskInput): Promise<TaskActionResult> {
   const u = await requireUser();
-  const data = taskInputSchema.parse(input);
-  const [existing] = await db.select().from(tasks).where(eq(tasks.id, id));
-  if (!existing) throw new Error("Not found");
-  if (existing.userId !== u.db.id) throw new Error("Forbidden");
-  await db
-    .update(tasks)
-    .set({ ...data, updatedAt: new Date() })
-    .where(eq(tasks.id, id));
+  try {
+    const data = taskInputSchema.parse(input);
+    const [row] = await db
+      .insert(tasks)
+      .values({ ...data, userId: u.db.id })
+      .returning({ id: tasks.id });
+    return { id: row.id };
+  } catch (err) {
+    return toActionError(err);
+  }
 }
 
-export async function deleteTask(id: number): Promise<void> {
+export async function updateTask(id: number, input: TaskInput): Promise<TaskActionResult> {
   const u = await requireUser();
-  const [existing] = await db.select().from(tasks).where(eq(tasks.id, id));
-  if (!existing) return;
-  if (existing.userId !== u.db.id) throw new Error("Forbidden");
-  await db.delete(tasks).where(eq(tasks.id, id));
+  try {
+    const data = taskInputSchema.parse(input);
+    const [existing] = await db.select().from(tasks).where(eq(tasks.id, id));
+    if (!existing) return { error: "Not found" };
+    if (existing.userId !== u.db.id) return { error: "Forbidden" };
+    await db
+      .update(tasks)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(tasks.id, id));
+    return {};
+  } catch (err) {
+    return toActionError(err);
+  }
+}
+
+export async function deleteTask(id: number): Promise<TaskActionResult> {
+  const u = await requireUser();
+  try {
+    const [existing] = await db.select().from(tasks).where(eq(tasks.id, id));
+    if (!existing) return {};
+    if (existing.userId !== u.db.id) return { error: "Forbidden" };
+    await db.delete(tasks).where(eq(tasks.id, id));
+    return {};
+  } catch (err) {
+    return toActionError(err);
+  }
 }
 
 export type TaskListFilters = {
