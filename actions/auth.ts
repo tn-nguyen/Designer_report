@@ -73,13 +73,3 @@ export async function logout(): Promise<void> {
   await clearSessionCookie();
   redirect("/login");
 }
-
-/**
- * Used by the workspace error boundary when a Redmine 401 surfaces
- * mid-session (revoked/expired API key) — clears the now-invalid
- * session and sends the user back to the login screen.
- */
-export async function clearAndRedirect(): Promise<void> {
-  await clearSessionCookie();
-  redirect("/login");
-}
