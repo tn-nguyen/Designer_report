@@ -1,4 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
+import { vi } from "vitest";
+
+vi.mock("@/lib/db/client", () => ({
+  db: {},
+}));
 
 // Ownership + validation are exercised by the pure schema below.
 // Full server-action tests need DB and are covered manually.

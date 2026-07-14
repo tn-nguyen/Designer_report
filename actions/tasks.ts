@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { and, eq, inArray, desc } from "drizzle-orm";
+import { and, eq, inArray, desc, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { tasks, users } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -73,7 +73,7 @@ export type TaskListFilters = {
 
 export async function listTasks(filters: TaskListFilters = {}) {
   const u = await requireUser();
-  const where = [] as any[];
+  const where: SQL[] = [];
 
   if (u.db.role === "member" || filters.userId === undefined) {
     where.push(eq(tasks.userId, u.db.id));
