@@ -55,14 +55,17 @@ export default async function WorkspacePage({
       listTeamMembers(),
     ]);
   } catch (err) {
-    // A Redmine API key revoked mid-session surfaces here as a 401. Handle
-    // it server-side (upstream of the error boundary) so the redirect works
-    // the same in production as in dev — Next.js redacts thrown error
-    // messages in prod builds, so string-matching in error.tsx doesn't work.
     if (err instanceof RedmineError && err.status === 401) {
       await clearSessionCookie();
-      redirect("/login"); // throws — expected control flow, not caught here
+      redirect("/login");
     }
+    console.error("[bugtracker-tool] WorkspacePage bundle fetch failed:", {
+      message: err instanceof Error ? err.message : String(err),
+      name: err instanceof Error ? err.name : undefined,
+      stack: err instanceof Error ? err.stack : undefined,
+      isRedmineError: err instanceof RedmineError,
+      status: err instanceof RedmineError ? err.status : undefined,
+    });
     throw err;
   }
   const [rows, projects, trackers, priorities, parents, teamMembers] = bundle;
