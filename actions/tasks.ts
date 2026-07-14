@@ -1,33 +1,13 @@
 "use server";
 
-import { z } from "zod";
 import { and, eq, inArray, desc, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { tasks, users } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { toRedmineCsv, type CsvTaskRow } from "@/lib/csv";
+import { taskInputSchema, type TaskInput } from "@/lib/validation/task";
 
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-
-export const taskInputSchema = z
-  .object({
-    tracker: z.string().min(1).max(64),
-    subject: z.string().min(1).max(255),
-    description: z.string().max(10000).nullish(),
-    priority: z.string().max(32).nullish(),
-    projectId: z.number().int().positive(),
-    projectName: z.string().min(1).max(255),
-    sprintName: z.string().max(255).nullish(),
-    parentTaskId: z.number().int().positive().nullish(),
-    startDate: z.string().regex(ISO_DATE).nullish(),
-    dueDate: z.string().regex(ISO_DATE).nullish(),
-  })
-  .refine(
-    (v) => !v.startDate || !v.dueDate || v.dueDate >= v.startDate,
-    { message: "dueDate must be >= startDate", path: ["dueDate"] },
-  );
-
-export type TaskInput = z.infer<typeof taskInputSchema>;
+export type { TaskInput };
 
 async function requireUser() {
   const u = await getCurrentUser();

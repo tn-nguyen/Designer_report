@@ -9,7 +9,7 @@ vi.mock("@/lib/db/client", () => ({
 // Full server-action tests need DB and are covered manually.
 describe("TaskInput schema", () => {
   it("rejects empty subject", async () => {
-    const { taskInputSchema } = await import("@/actions/tasks");
+    const { taskInputSchema } = await import("@/lib/validation/task");
     const res = taskInputSchema.safeParse({
       tracker: "Task_Scr",
       subject: "",
@@ -20,7 +20,7 @@ describe("TaskInput schema", () => {
   });
 
   it("rejects due < start", async () => {
-    const { taskInputSchema } = await import("@/actions/tasks");
+    const { taskInputSchema } = await import("@/lib/validation/task");
     const res = taskInputSchema.safeParse({
       tracker: "Task_Scr",
       subject: "x",
@@ -33,7 +33,7 @@ describe("TaskInput schema", () => {
   });
 
   it("accepts a valid input", async () => {
-    const { taskInputSchema } = await import("@/actions/tasks");
+    const { taskInputSchema } = await import("@/lib/validation/task");
     const res = taskInputSchema.safeParse({
       tracker: "Task_Scr",
       subject: "Design something",
