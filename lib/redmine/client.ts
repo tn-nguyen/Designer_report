@@ -55,7 +55,14 @@ export class RedmineClient {
           signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         });
       } catch (err) {
-        if (err instanceof TypeError && attempt < MAX_RETRIES) {
+        // TypeError covers fetch-level transport failures (DNS, connection
+        // refused, etc). AbortSignal.timeout() rejects with a DOMException
+        // named "TimeoutError" instead — a hung Redmine call must retry too,
+        // not bubble up as a raw DOMException after a single 10s wait.
+        const isRetryable =
+          err instanceof TypeError ||
+          (err instanceof DOMException && err.name === "TimeoutError");
+        if (isRetryable && attempt < MAX_RETRIES) {
           await sleep(RETRY_BASE_DELAY_MS * 2 ** attempt);
           continue;
         }

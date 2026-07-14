@@ -29,7 +29,10 @@ export async function getCached<T>(
   try {
     fresh = await fetcher();
   } catch (err) {
-    if (hit) {
+    // A forced refresh means "get me the latest, no matter what" — falling
+    // back to stale data would silently defeat that intent, so rethrow
+    // immediately instead of serving the stale row.
+    if (hit && !options.force) {
       console.warn("[bugtracker-tool] Redmine fetch failed, serving stale cache for", key);
       return hit.data as T;
     }

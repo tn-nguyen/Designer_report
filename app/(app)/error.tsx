@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { clearAndRedirect } from "@/actions/auth";
 
-// Catches errors thrown while rendering the workspace. If a user's Redmine
-// API key is revoked (or otherwise invalidated) mid-session, RedmineClient
-// throws a RedmineError formatted as "Redmine 401 for ..." — detect that
-// here and bounce to /login instead of showing Next's crash screen.
+// Catches errors thrown while rendering the workspace that aren't a
+// mid-session Redmine 401 (those are handled server-side in page.tsx,
+// upstream of this boundary, since Next.js redacts thrown error messages
+// in production builds — string-matching here would only work in dev).
 export default function AppError({
   error,
   reset,
@@ -14,28 +13,14 @@ export default function AppError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  const isSessionExpired = error.message.includes("Redmine 401");
-
   useEffect(() => {
-    if (isSessionExpired) {
-      clearAndRedirect();
-    } else {
-      console.error(error);
-    }
-  }, [error, isSessionExpired]);
-
-  if (isSessionExpired) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center p-6 text-sm text-gray-600">
-        Phiên đăng nhập đã hết hạn, đang chuyển hướng đến trang đăng nhập…
-      </div>
-    );
-  }
+    console.error(error);
+  }, [error]);
 
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 p-6 text-center">
       <h2 className="text-lg font-semibold">Đã có lỗi xảy ra.</h2>
-      <p className="text-sm text-gray-600">{error.message || "Vui lòng thử lại."}</p>
+      <p className="text-sm text-gray-600">Vui lòng thử lại.</p>
       <button
         type="button"
         onClick={() => reset()}
