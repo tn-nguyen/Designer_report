@@ -95,7 +95,16 @@ export class RedmineClient {
 
   async getSubProjects(parentId: number | string): Promise<Project[]> {
     const all = await this.paginate<Project>("/projects.json", "projects", { include: "" });
-    const parentNum = typeof parentId === "number" ? parentId : Number(parentId);
+    let parentNum: number;
+    if (typeof parentId === "number") {
+      parentNum = parentId;
+    } else if (/^\d+$/.test(parentId)) {
+      parentNum = Number(parentId);
+    } else {
+      const parent = all.find((p) => p.identifier === parentId);
+      if (!parent) return [];
+      parentNum = parent.id;
+    }
     return all.filter((p) => p.parent?.id === parentNum);
   }
 
