@@ -11,6 +11,7 @@ export function WorkspaceClient(props: {
   trackers: { id: number; name: string }[];
   priorities: { id: number; name: string }[];
   parents: { id: number; subject: string; projectName: string; tracker: string }[];
+  teamMembers: { id: number; name: string }[];
   currentUserId: number;
   role: "manager" | "member";
 }) {
@@ -35,7 +36,7 @@ export function WorkspaceClient(props: {
         trackers={props.trackers}
         priorities={props.priorities}
         parents={props.parents}
-        initial={editing as any}
+        initial={editing}
         editingId={editingId}
         onDone={() => {
           setEditingId(undefined);
@@ -65,13 +66,11 @@ export function WorkspaceClient(props: {
                 className="rounded border px-2 py-1"
               >
                 <option value="all">All team</option>
-                {Array.from(new Map(props.rows.map((r) => [r.userId, r.userName])).entries()).map(
-                  ([id, name]) => (
-                    <option key={id} value={id}>
-                      {name}
-                    </option>
-                  ),
-                )}
+                {props.teamMembers.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
               </select>
             </label>
           )}

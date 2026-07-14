@@ -1,6 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { redirect } from "next/navigation";
-import { listTasks } from "@/actions/tasks";
+import { listTasks, listTeamMembers } from "@/actions/tasks";
 import {
   getProjects,
   getTrackers,
@@ -31,7 +31,7 @@ export default async function WorkspacePage({
         : "all"
       : user.db.id;
 
-  const [rows, projects, trackers, priorities, parents] = await Promise.all([
+  const [rows, projects, trackers, priorities, parents, teamMembers] = await Promise.all([
     listTasks({
       status,
       sprint,
@@ -41,15 +41,17 @@ export default async function WorkspacePage({
     getTrackers(),
     getPriorities(),
     getParentTasks(),
+    listTeamMembers(),
   ]);
 
   return (
     <WorkspaceClient
-      rows={rows as any}
+      rows={rows}
       projects={projects}
       trackers={trackers}
       priorities={priorities}
       parents={parents}
+      teamMembers={teamMembers}
       currentUserId={user.db.id}
       role={user.db.role as "manager" | "member"}
     />

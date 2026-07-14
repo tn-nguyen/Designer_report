@@ -110,6 +110,15 @@ export async function listTasks(filters: TaskListFilters = {}) {
     .orderBy(desc(tasks.createdAt));
 }
 
+export async function listTeamMembers(): Promise<{ id: number; name: string }[]> {
+  await requireUser();
+  const rows = await db
+    .select({ id: users.id, name: users.name })
+    .from(users)
+    .orderBy(users.name);
+  return rows;
+}
+
 export async function markImported(ids: number[]): Promise<void> {
   const u = await requireUser();
   if (ids.length === 0) return;
