@@ -1,4 +1,4 @@
-# Bugtracker Report Tool
+# Designer Report
 
 Team-Design task-logging web app that exports a Redmine-compatible CSV
 for weekly import into https://bugtracker.i3international.com/.

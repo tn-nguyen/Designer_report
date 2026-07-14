@@ -1,6 +1,6 @@
 import "./globals.css";
 
-export const metadata = { title: "Bugtracker Report Tool" };
+export const metadata = { title: "Designer Report" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

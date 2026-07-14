@@ -4,7 +4,7 @@ import { RefreshButton } from "./refresh-button";
 export function Header({ name, role }: { name: string; role: "manager" | "member" }) {
   return (
     <header className="flex items-center justify-between border-b px-6 py-3">
-      <h1 className="text-lg font-semibold">Bugtracker Report Tool</h1>
+      <h1 className="text-lg font-semibold">Designer Report</h1>
       <div className="flex items-center gap-4 text-sm">
         <RefreshButton />
         <span>
