@@ -54,4 +54,46 @@ describe("RedmineClient", () => {
     expect(issues).toHaveLength(3);
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  it("retries on 5xx and succeeds once the server recovers", async () => {
+    vi.useFakeTimers();
+    const { RedmineClient } = await importClient();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("", { status: 502 }))
+      .mockResolvedValueOnce(
+        jsonResponse({ user: { id: 1, firstname: "N", lastname: "N", mail: "x" } }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    const c = new RedmineClient("k");
+    const promise = c.getCurrentUser();
+    await vi.runAllTimersAsync();
+    const user = await promise;
+    expect(user.id).toBe(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
+  });
+
+  it("does not retry on 4xx and throws RedmineError immediately", async () => {
+    const { RedmineClient, RedmineError } = await importClient();
+    const fetchMock = vi.fn().mockResolvedValue(new Response("", { status: 403 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const c = new RedmineClient("k");
+    await expect(c.getCurrentUser()).rejects.toBeInstanceOf(RedmineError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("gives up after exhausting retries on repeated 5xx", async () => {
+    vi.useFakeTimers();
+    const { RedmineClient, RedmineError } = await importClient();
+    const fetchMock = vi.fn().mockResolvedValue(new Response("", { status: 500 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const c = new RedmineClient("k");
+    const promise = c.getCurrentUser();
+    const assertion = expect(promise).rejects.toBeInstanceOf(RedmineError);
+    await vi.runAllTimersAsync();
+    await assertion;
+    expect(fetchMock).toHaveBeenCalledTimes(3); // initial + 2 retries
+    vi.useRealTimers();
+  });
 });

@@ -24,6 +24,14 @@ function baseUrl(): string {
   return u.replace(/\/+$/, "");
 }
 
+const REQUEST_TIMEOUT_MS = 10_000;
+const MAX_RETRIES = 2;
+const RETRY_BASE_DELAY_MS = 200;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export class RedmineClient {
   constructor(private readonly apiKey: string) {}
 
@@ -32,17 +40,38 @@ export class RedmineClient {
     if (params) {
       for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v));
     }
-    const res = await fetch(url.toString(), {
-      headers: {
-        "X-Redmine-API-Key": this.apiKey,
-        Accept: "application/json",
-      },
-      cache: "no-store",
-    });
-    if (!res.ok) {
-      throw new RedmineError(`Redmine ${res.status} for ${url.pathname}`, res.status);
+
+    // Retry on 5xx / transport errors only. 4xx (bad auth, forbidden, etc.)
+    // fails fast — retrying won't fix a rejected API key.
+    for (let attempt = 0; ; attempt++) {
+      let res: Response;
+      try {
+        res = await fetch(url.toString(), {
+          headers: {
+            "X-Redmine-API-Key": this.apiKey,
+            Accept: "application/json",
+          },
+          cache: "no-store",
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        });
+      } catch (err) {
+        if (err instanceof TypeError && attempt < MAX_RETRIES) {
+          await sleep(RETRY_BASE_DELAY_MS * 2 ** attempt);
+          continue;
+        }
+        throw err;
+      }
+
+      if (!res.ok) {
+        if (res.status >= 500 && attempt < MAX_RETRIES) {
+          await sleep(RETRY_BASE_DELAY_MS * 2 ** attempt);
+          continue;
+        }
+        throw new RedmineError(`Redmine ${res.status} for ${url.pathname}`, res.status);
+      }
+
+      return (await res.json()) as T;
     }
-    return (await res.json()) as T;
   }
 
   async getCurrentUser(): Promise<CurrentUser> {
