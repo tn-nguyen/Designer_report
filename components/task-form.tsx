@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
-import { createTask, updateTask, type TaskInput } from "@/actions/tasks";
+import { createTask, updateTask } from "@/actions/tasks";
 import { getVersions } from "@/actions/metadata";
+import type { TaskInput } from "@/lib/validation/task";
 
 export type Option = { id: number; name: string };
 export type ParentOption = { id: number; subject: string; projectName: string; tracker: string };

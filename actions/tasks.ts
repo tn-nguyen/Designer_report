@@ -6,11 +6,11 @@ import { db } from "@/lib/db/client";
 import { tasks, users } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { toRedmineCsv, type CsvTaskRow } from "@/lib/csv";
-import { taskInputSchema, type TaskInput } from "@/lib/validation/task";
-
-export type { TaskInput };
-
-export type TaskActionResult = { error?: string; id?: number };
+import {
+  taskInputSchema,
+  type TaskInput,
+  type TaskActionResult,
+} from "@/lib/validation/task";
 
 async function requireUser() {
   const u = await getCurrentUser();

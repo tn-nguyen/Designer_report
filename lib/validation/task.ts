@@ -21,3 +21,5 @@ export const taskInputSchema = z
   );
 
 export type TaskInput = z.infer<typeof taskInputSchema>;
+
+export type TaskActionResult = { error?: string; id?: number };
