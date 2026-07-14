@@ -40,15 +40,20 @@ export async function getParentTasks() {
   const parentId = process.env.DESIGN_PROJECTS_ID!;
   const c = await clientFromSession();
   return await getCached("parent_tasks", async () => {
-    const trackers = await c.getTrackers();
-    const ids = trackers.filter((t) => EPIC_STORY_NAME_RE.test(t.name)).map((t) => t.id);
-    if (ids.length === 0) return [];
-    const issues = await c.getEpicAndStoryIssues(parentId, ids);
-    return issues.map((i) => ({
-      id: i.id,
-      subject: i.subject,
-      projectName: i.project.name,
-      tracker: i.tracker.name,
-    }));
+    try {
+      const trackers = await c.getTrackers();
+      const ids = trackers.filter((t) => EPIC_STORY_NAME_RE.test(t.name)).map((t) => t.id);
+      if (ids.length === 0) return [];
+      const issues = await c.getEpicAndStoryIssues(parentId, ids);
+      return issues.map((i) => ({
+        id: i.id,
+        subject: i.subject,
+        projectName: i.project.name,
+        tracker: i.tracker.name,
+      }));
+    } catch (err) {
+      console.error("[bugtracker-tool] getParentTasks failed, returning empty list:", err);
+      return [];
+    }
   });
 }
